@@ -11,8 +11,5 @@ type Runnable interface {
 	// Run runs what needed to be ran until cancelled by
 	// `ctx` or the completion of its run.
 	//
-	// ps.: runs terminated by context cancellation or
-	//      deadlines are considered not succeeded.
-	//
-	Run(ctx context.Context) (succeeded bool)
+	Run(ctx context.Context) (err error)
 }

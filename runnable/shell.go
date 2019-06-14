@@ -4,31 +4,49 @@ import (
 	"context"
 	"io"
 	"os/exec"
+
+	"github.com/pkg/errors"
 )
 
-type ShellRunnable struct {
+// ShellCommand executes a given command using a shell.
+//
+type ShellCommand struct {
 	command string
+	stderr  io.Writer
 }
 
-func NewShellRunnable(command string, stdout, stderr io.Writer) (runnable *ShellRunnable) {
-	runnable = &ShellRunnable{
+// NewShellCommand instantiates a new ShellCommand that
+// is meant to always run with a specified `command`.
+//
+func NewShellCommand(command string, stderr io.Writer) (runnable *ShellCommand) {
+	runnable = &ShellCommand{
 		command: command,
 	}
 
 	return
 }
 
-func (r *ShellRunnable) Run(ctx context.Context) (succeeded bool) {
+// Run runs the command either until completion or context
+// cancellation.
+//
+func (r *ShellCommand) Run(ctx context.Context) (err error) {
 	cmd := exec.CommandContext(ctx, "/bin/bash", "-c", r.command)
 
-	out, err := cmd.CombinedOutput()
-	if ctx.Err() == context.DeadlineExceeded {
-		return
+	_, err = cmd.CombinedOutput()
+
+	switch ctx.Err() {
+	case context.DeadlineExceeded:
+		err = errors.Wrapf(ctx.Err(),
+			"command didn't finish on time")
+	case context.Canceled:
+		err = errors.Wrapf(ctx.Err(),
+			"command execution cancelled")
 	}
 
 	if err != nil {
-		succeeded = false
-		// send ALL output to stderr
+		err = errors.Wrapf(err,
+			"command execution failed")
+		return
 	}
 
 	return
