@@ -13,6 +13,8 @@ type WithTimeout struct {
 	duration time.Duration
 }
 
+var _ Runnable = &WithTimeout{}
+
 // NewWithTimeout instantiates a runnable that has the context automatically
 // cancelled after a given duration.
 //

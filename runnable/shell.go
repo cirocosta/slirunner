@@ -15,6 +15,8 @@ type ShellCommand struct {
 	stderr  io.Writer
 }
 
+var _ Runnable = &ShellCommand{}
+
 // NewShellCommand instantiates a new ShellCommand that
 // is meant to always run with a specified `command`.
 //

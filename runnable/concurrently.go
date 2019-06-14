@@ -14,6 +14,8 @@ type Concurrently struct {
 	runnables []Runnable
 }
 
+var _ Runnable = &Concurrently{}
+
 func NewConcurrently(runnables []Runnable) *Concurrently {
 	return &Concurrently{
 		runnables: runnables,

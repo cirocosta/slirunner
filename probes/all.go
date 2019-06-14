@@ -54,14 +54,18 @@ jobs:
 var CreateAndRunNewPipeline = runnable.NewWithTimeout(runnable.NewShellCommand(`
 	set -o errexit
 
-	fly -t ci destroy-pipeline -n -p new-pipeline
-	fly -t ci set-pipeline -n -p new-pipeline -c <("`+samplePipeline+`")
-	fly -t ci unpause-pipeline -p new-pipeline
+	fly -t local destroy-pipeline -n -p new-pipeline
+	fly -t local set-pipeline -n -p new-pipeline -c <("`+samplePipeline+`")
+	fly -t local unpause-pipeline -p new-pipeline
 
-	until [ "$(fly -t ci builds -j new-pipeline/auto-triggering | grep -v pending | wc -l)" -gt 0 ]; do
+	until [ "$(fly -t local builds -j new-pipeline/auto-triggering | grep -v pending | wc -l)" -gt 0 ]; do
 		echo 'waiting for job to trigger...'
 		sleep 1
 	done
-	fly -t ci watch -j new-pipeline/auto-triggering
-	fly -t ci destroy-pipeline -n -p new-pipeline
+	fly -t local watch -j new-pipeline/auto-triggering
+	fly -t local destroy-pipeline -n -p new-pipeline
 `, os.Stderr), 60*time.Second)
+
+var All = runnable.NewConcurrently([]runnable.Runnable{
+	CreateAndRunNewPipeline,
+})
