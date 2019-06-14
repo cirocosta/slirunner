@@ -1,9 +1,17 @@
 package main
 
 import (
-	"fmt"
+	"os"
+
+	"github.com/cirocosta/slirunner/commands"
+	"github.com/jessevdk/go-flags"
 )
 
 func main() {
-	fmt.Println("vim-go")
+	_, err := flags.Parse(&commands.SLIRunner)
+	if err != nil {
+		os.Exit(1)
+	}
+
+	return
 }
