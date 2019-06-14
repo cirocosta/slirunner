@@ -2,11 +2,10 @@ package probes
 
 import (
 	"os"
+	"time"
 
 	"github.com/cirocosta/slirunner/runnable"
 )
-
-var All interface{}
 
 const samplePipeline = `
 resources:
@@ -52,17 +51,17 @@ jobs:
   - *say-hello
 `
 
-var CreateAndRunNewPipeline = runnable.NewShellCommand(`
-set -o errexit
+var CreateAndRunNewPipeline = runnable.NewWithTimeout(runnable.NewShellCommand(`
+	set -o errexit
 
-fly -t ci destroy-pipeline -n -p new-pipeline
-fly -t ci set-pipeline -n -p new-pipeline -c <("`+samplePipeline+`")
-fly -t ci unpause-pipeline -p new-pipeline
+	fly -t ci destroy-pipeline -n -p new-pipeline
+	fly -t ci set-pipeline -n -p new-pipeline -c <("`+samplePipeline+`")
+	fly -t ci unpause-pipeline -p new-pipeline
 
-until [ "$(fly -t ci builds -j new-pipeline/auto-triggering | grep -v pending | wc -l)" -gt 0 ]; do
-	echo 'waiting for job to trigger...'
-	sleep 1
-done
-fly -t ci watch -j new-pipeline/auto-triggering
-fly -t ci destroy-pipeline -n -p new-pipeline
-`, os.Stderr)
+	until [ "$(fly -t ci builds -j new-pipeline/auto-triggering | grep -v pending | wc -l)" -gt 0 ]; do
+		echo 'waiting for job to trigger...'
+		sleep 1
+	done
+	fly -t ci watch -j new-pipeline/auto-triggering
+	fly -t ci destroy-pipeline -n -p new-pipeline
+`, os.Stderr), 60*time.Second)

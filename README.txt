@@ -84,26 +84,6 @@ USAGE
 
 
 
-// ConcurrentRunner concurrently runs a set of runnables, possibly
-// cancelling them all at once.
-//
-// Implements the `Runnable` interface.
-// 
-type Concurrently struct {
-	runnables []Runnable
-	func run(ctx) -> bool
-}
-
-
-// WithTimeout wraps a Runnable with a timeout, ensuring that it doesn't
-// run forever.
-//
-type WithTimeout struct {
-	runnable Runnable
-	func run(ctx) -> bool
-}
-
-
 // Periodically runs a set of registered Runnables forever (until cancelled).
 //
 type Periodically struct {
