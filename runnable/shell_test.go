@@ -3,6 +3,7 @@ package runnable_test
 import (
 	"bytes"
 	"context"
+	"time"
 
 	"github.com/cirocosta/slirunner/runnable"
 
@@ -16,9 +17,12 @@ var _ = Describe("ShellCommand", func() {
 		err    error
 		cmd    string
 		buffer bytes.Buffer
-
-		ctx context.Context = context.TODO()
+		ctx    context.Context
 	)
+
+	BeforeEach(func() {
+		ctx = context.TODO()
+	})
 
 	JustBeforeEach(func() {
 		err = runnable.NewShellCommand(cmd, &buffer).Run(ctx)
@@ -41,6 +45,19 @@ var _ = Describe("ShellCommand", func() {
 
 		It("doesn't error", func() {
 			Expect(err).ToNot(HaveOccurred())
+		})
+	})
+
+	Context("with a command that hangs forever", func() {
+		BeforeEach(func() {
+			cmd = "sleep 33d"
+			ctx, _ = context.WithTimeout(ctx, 200*time.Millisecond)
+		})
+
+		Context("cancelling it", func() {
+			It("fails", func() {
+				Expect(err).To(HaveOccurred())
+			})
 		})
 	})
 })
