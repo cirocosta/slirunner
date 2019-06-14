@@ -53,9 +53,10 @@ jobs:
 
 var CreateAndRunNewPipeline = runnable.NewWithTimeout(runnable.NewShellCommand(`
 	set -o errexit
+	set -o xtrace
 
 	fly -t local destroy-pipeline -n -p new-pipeline
-	fly -t local set-pipeline -n -p new-pipeline -c <("`+samplePipeline+`")
+	fly -t local set-pipeline -n -p new-pipeline -c <(echo '`+samplePipeline+`')
 	fly -t local unpause-pipeline -p new-pipeline
 
 	until [ "$(fly -t local builds -j new-pipeline/auto-triggering | grep -v pending | wc -l)" -gt 0 ]; do

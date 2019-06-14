@@ -2,6 +2,7 @@ package runnable
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"os/exec"
 
@@ -23,6 +24,7 @@ var _ Runnable = &ShellCommand{}
 func NewShellCommand(command string, stderr io.Writer) (runnable *ShellCommand) {
 	runnable = &ShellCommand{
 		command: command,
+		stderr:  stderr,
 	}
 
 	return
@@ -32,9 +34,10 @@ func NewShellCommand(command string, stderr io.Writer) (runnable *ShellCommand) 
 // cancellation.
 //
 func (r *ShellCommand) Run(ctx context.Context) (err error) {
-	cmd := exec.CommandContext(ctx, "/bin/bash", "-c", r.command)
+	var output []byte
 
-	_, err = cmd.CombinedOutput()
+	cmd := exec.CommandContext(ctx, "/bin/bash", "-c", r.command)
+	output, err = cmd.CombinedOutput()
 
 	switch ctx.Err() {
 	case context.DeadlineExceeded:
@@ -48,6 +51,7 @@ func (r *ShellCommand) Run(ctx context.Context) (err error) {
 	if err != nil {
 		err = errors.Wrapf(err,
 			"command execution failed")
+		fmt.Fprintf(r.stderr, "COMMAND FAILURE--- \n%s\n", output)
 		return
 	}
 

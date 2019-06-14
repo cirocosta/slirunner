@@ -22,6 +22,7 @@ var _ = Describe("ShellCommand", func() {
 
 	BeforeEach(func() {
 		ctx = context.TODO()
+		buffer.Reset()
 	})
 
 	JustBeforeEach(func() {
@@ -30,11 +31,16 @@ var _ = Describe("ShellCommand", func() {
 
 	Context("with a command that fails", func() {
 		BeforeEach(func() {
-			cmd = "exit 1"
+			cmd = `echo "damn" && exit 1`
 		})
 
 		It("errors", func() {
 			Expect(err).To(HaveOccurred())
+		})
+
+		It("writes output to `stderr`", func() {
+			Expect(buffer.Bytes()).ToNot(BeEmpty())
+			Expect(string(buffer.Bytes())).To(ContainSubstring("damn"))
 		})
 	})
 
@@ -45,6 +51,10 @@ var _ = Describe("ShellCommand", func() {
 
 		It("doesn't error", func() {
 			Expect(err).ToNot(HaveOccurred())
+		})
+
+		It("doesn't write to `stderr`", func() {
+			Expect(buffer.Bytes()).To(BeEmpty())
 		})
 	})
 
