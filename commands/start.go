@@ -6,6 +6,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/cirocosta/slirunner/exporter"
 	"github.com/cirocosta/slirunner/probes"
 )
 
@@ -13,6 +14,8 @@ type startCommand struct {
 	Target          string        `long:"target" required:"true"`
 	PipelinesPrefix string        `long:"prefix" default:"slirunner-"`
 	Interval        time.Duration `long:"interval" default:"1m"`
+
+	Prometheus exporter.Exporter `group:"Prometheus configuration"`
 }
 
 func (c *startCommand) Execute(args []string) (err error) {
@@ -22,7 +25,19 @@ func (c *startCommand) Execute(args []string) (err error) {
 	)
 
 	ctx, cancel := context.WithCancel(context.Background())
-	go onTerminationSignal(cancel)
+	go onTerminationSignal(func() {
+		cancel()
+		c.Prometheus.Close()
+	})
+
+	go func() {
+		err := c.Prometheus.Listen()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, err.Error())
+		}
+
+		cancel()
+	}()
 
 	f := func() {
 		err = allProbes.Run(ctx)
@@ -34,8 +49,13 @@ func (c *startCommand) Execute(args []string) (err error) {
 
 	f()
 
-	for _ = range ticker.C {
-		f()
+	for {
+		select {
+		case <-ticker.C:
+			f()
+		case <-ctx.Done():
+			c.Prometheus.Close()
+		}
 	}
 
 	return
