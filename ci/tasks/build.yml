@@ -1,0 +1,19 @@
+---
+platform: linux
+
+image_resource:
+  type: registry-image
+  source: {repository: concourse/builder-task}
+
+params:
+  REPOSITORY: cirocosta/slirunner
+  TAG: latest
+  CONTEXT: repository
+
+inputs:
+- name: repository
+
+outputs:
+- name: image
+
+run: {path: build}
