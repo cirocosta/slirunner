@@ -4,3 +4,5 @@ build:
 test:
 	go test -v ./...
 
+image:
+	docker build -t cirocosta/slirunner .

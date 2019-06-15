@@ -1,10 +1,10 @@
-FROM golang:alpine AS golang
+FROM golang AS golang
 
 
 FROM golang AS base
 
 	ENV CGO_ENABLED=0
-	RUN apk add --update git gcc musl-dev
+	RUN apt update && apt install -y git
 
 	ADD . /src
 	WORKDIR /src
@@ -24,7 +24,7 @@ FROM base AS test
 	RUN go test -v ./...
 
 
-FROM alpine AS release
+FROM ubuntu AS release
 
 	COPY \
 		--from=build \
