@@ -26,6 +26,8 @@ FROM base AS test
 
 FROM ubuntu AS release
 
+	RUN apt update && apt install -y ca-certificates
+
 	COPY \
 		--from=build \
 		/usr/bin/slirunner \
