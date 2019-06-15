@@ -25,7 +25,7 @@ func New(target, prefix string) runnable.Runnable {
 				fly -t {{ .Target }} unpause-pipeline -p {{ .Pipeline }}
 
 				wait_for_build () {
-					fly -t local builds -j {{ .Pipeline }}/auto-triggering | \
+					fly -t {{ .Target }} builds -j {{ .Pipeline }}/auto-triggering | \
 						grep -v pending | \
 						wc -l
 				}
@@ -35,8 +35,8 @@ func New(target, prefix string) runnable.Runnable {
 					sleep 1
 				done
 
-				fly -t local watch -j {{ .Pipeline }}/auto-triggering
-				fly -t local destroy-pipeline -n -p {{ .Pipeline }}
+				fly -t {{ .Target }} watch -j {{ .Pipeline }}/auto-triggering
+				fly -t {{ .Target }} destroy-pipeline -n -p {{ .Pipeline }}
 
 				`, Config{Target: target, Pipeline: prefix + "create-and-run-new-pipeline"}), os.Stderr),
 				60*time.Second,
@@ -56,10 +56,10 @@ func New(target, prefix string) runnable.Runnable {
 				fly -t {{ .Target }} unpause-pipeline -p {{ .Pipeline }}
 
 				job_name={{ .Pipeline }}/failing
-				fly -t local trigger-job -j "$job_name" -w || true
+				fly -t {{ .Target }} trigger-job -j "$job_name" -w || true
 
-				build=$(fly -t local builds -j "$job_name" | head -1 | awk '{print $3}')
-				fly -t local hijack -j "$job_name" -b $build echo Hello World
+				build=$(fly -t {{ .Target }} builds -j "$job_name" | head -1 | awk '{print $3}')
+				fly -t {{ .Target }} hijack -j "$job_name" -b $build echo Hello World
 
 				`, Config{Target: target, Pipeline: prefix + "hijack-failing-build"}), os.Stderr),
 				60*time.Second,

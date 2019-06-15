@@ -45,6 +45,7 @@ jobs:
               file: repository/ci/tasks/build.yml
             - task: test
               privileged: true
+              output_mapping: { image: discard }
               params: {TARGET: "test"}
               file: repository/ci/tasks/build.yml
       - put: container-image
