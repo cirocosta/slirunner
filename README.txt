@@ -21,12 +21,11 @@ PRIOR
 	Before `slirunner`, oxygenmask[1] was the solution for running 
 	high-level probes against Concourse installation.
 
-	It has few problems though:
+	It has a few quirks that I don't think are necessary to have:
 
 		- requires another Concourse installation to run those probes
-		  from
-
 		- tightly coupled to datadog
+		- performs some basic UI testing (not very necessary IMO)
 
 
 	[1]: https://github.com/concourse/oxygen-mask

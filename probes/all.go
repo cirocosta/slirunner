@@ -7,66 +7,71 @@ import (
 	"github.com/cirocosta/slirunner/runnable"
 )
 
-const samplePipeline = `
-resources:
-- name: time-trigger
-  type: time
-  source: {interval: 24h}
+func New(target, prefix string) runnable.Runnable {
+	var createAndRunNewPipeline = runnable.NewWithTimeout(
+		runnable.NewShellCommand(FormatProbe(`
 
-jobs:
-- name: simple-job
-  build_logs_to_retain: 20
-  public: true
-  plan:
-  - &say-hello
-    task: say-hello
-    config:
-      platform: linux
-      image_resource:
-        type: registry-image
-        source: {repository: busybox}
-      run:
-        path: echo
-        args: ["Hello, world!"]
+		set -o errexit
+		set -o xtrace
 
-- name: failing
-  build_logs_to_retain: 20
-  public: true
-  plan:
-  - task: fail
-    config:
-      platform: linux
-      image_resource:
-        type: registry-image
-        source: {repository: busybox}
-      run:
-        path: false
+		fly -t {{ .Target }} destroy-pipeline -n -p {{ .Pipeline }} || true
+		fly -t {{ .Target }} set-pipeline -n -p {{ .Pipeline }} -c <(echo '`+pipelineContents+`')
+		fly -t {{ .Target }} unpause-pipeline -p {{ .Pipeline }}
 
-- name: auto-triggering
-  build_logs_to_retain: 20
-  public: true
-  plan:
-  - get: time-trigger
-    trigger: true
-  - *say-hello
-`
+		wait_for_build () {
+			fly -t local builds -j {{ .Pipeline }}/auto-triggering | \
+				grep -v pending | \
+				wc -l
+		}
 
-var CreateAndRunNewPipeline = runnable.NewWithTimeout(runnable.NewShellCommand(`
-	set -o errexit
-	set -o xtrace
+		until [ "$(wait_for_build)" -gt 0 ]; do
+			echo 'waiting for job to automatically trigger...'
+			sleep 1
+		done
 
-	fly -t local destroy-pipeline -n -p new-pipeline
-	fly -t local set-pipeline -n -p new-pipeline -c <(echo '`+samplePipeline+`')
-	fly -t local unpause-pipeline -p new-pipeline
+		fly -t local watch -j {{ .Pipeline }}/auto-triggering
+		fly -t local destroy-pipeline -n -p {{ .Pipeline }}
 
-	until [ "$(fly -t local builds -j new-pipeline/auto-triggering | grep -v pending | wc -l)" -gt 0 ]; do
-		echo 'waiting for job to trigger...'
-		sleep 1
-	done
-	fly -t local watch -j new-pipeline/auto-triggering
-	fly -t local destroy-pipeline -n -p new-pipeline
-`, os.Stderr), 60*time.Second)
+		`, Config{Target: target, Pipeline: prefix + "create-and-run-new-pipeline"}), os.Stderr),
+		60*time.Second,
+	)
 
-var All = runnable.NewConcurrently([]runnable.Runnable{
-	CreateAndRunNewPipeline,
-})
+	var hijackFailingBuild = runnable.NewWithTimeout(
+		runnable.NewShellCommand(FormatProbe(`
+
+		set -o errexit
+		set -o xtrace
+
+		fly -t {{ .Target }} set-pipeline -n -p {{ .Pipeline }} -c <(echo '`+pipelineContents+`')
+		fly -t {{ .Target }} unpause-pipeline -p {{ .Pipeline }}
+
+		job_name={{ .Pipeline }}/failing
+		fly -t local trigger-job -j "$job_name" -w || true
+
+		build=$(fly -t local builds -j "$job_name" | head -1 | awk '{print $3}')
+		fly -t local hijack -j "$job_name" -b $build echo Hello World
+
+		`, Config{Target: target, Pipeline: prefix + "hijack-failing-build"}), os.Stderr),
+		60*time.Second,
+	)
+
+	var runExistingPipeline = runnable.NewWithTimeout(
+		runnable.NewShellCommand(FormatProbe(`
+		set -o xtrace
+		set -o errexit
+
+		fly -t {{ .Target }} set-pipeline -n -p {{ .Pipeline }} -c <(echo '`+pipelineContents+`')
+		fly -t {{ .Target }} unpause-pipeline -p {{ .Pipeline }}
+
+		fly -t {{ .Target }} trigger-job -w -j "{{ .Pipeline }}/simple-job"
+
+		`, Config{Target: target, Pipeline: prefix + "run-existing-pipeline"}), os.Stderr),
+		60*time.Second,
+	)
+
+	return runnable.NewConcurrently([]runnable.Runnable{
+		createAndRunNewPipeline,
+		hijackFailingBuild,
+		runExistingPipeline,
+	})
+}
