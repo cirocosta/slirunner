@@ -11,9 +11,9 @@ import (
 )
 
 type startCommand struct {
-	Target          string        `long:"target" required:"true"`
-	PipelinesPrefix string        `long:"prefix" default:"slirunner-"`
-	Interval        time.Duration `long:"interval" default:"1m"`
+	Target          string        `long:"target"   required:"true"      description:"target to be used by fly commands"`
+	PipelinesPrefix string        `long:"prefix"   default:"slirunner-" description:"prefix used in pipelines created by probes"`
+	Interval        time.Duration `long:"interval" default:"1m"         description:"interval between executions"`
 
 	Prometheus exporter.Exporter `group:"Prometheus configuration"`
 }

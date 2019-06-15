@@ -9,8 +9,8 @@ import (
 )
 
 type Exporter struct {
-	Address string `long:"prometheus-address" default:":9001"`
-	Path    string `long:"prometheus-path" default:"/"`
+	Address string `long:"prometheus-address" default:":9001" description:"address to listen for prometheus scrapes"`
+	Path    string `long:"prometheus-path"    default:"/"     description:"path to serve prometheus metrics"`
 
 	listener net.Listener
 }
