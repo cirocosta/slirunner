@@ -10,7 +10,6 @@ import (
 
 func New(target, prefix string) runnable.Runnable {
 	logger := lager.NewLogger("probes")
-
 	logger.RegisterSink(lager.NewPrettySink(os.Stdout, lager.INFO))
 
 	var createAndRunNewPipeline = runnable.NewWithLogging(logger.Session("create-and-run-new-pipeline"),
