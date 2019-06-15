@@ -39,22 +39,15 @@ func (c *startCommand) Execute(args []string) (err error) {
 		cancel()
 	}()
 
-	f := func() {
-		err = allProbes.Run(ctx)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, err.Error())
-			os.Exit(1)
-		}
-	}
-
-	f()
+	allProbes.Run(ctx)
 
 	for {
 		select {
 		case <-ticker.C:
-			f()
+			allProbes.Run(ctx)
 		case <-ctx.Done():
 			c.Prometheus.Close()
+			return
 		}
 	}
 
