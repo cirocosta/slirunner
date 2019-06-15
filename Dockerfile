@@ -24,9 +24,21 @@ FROM base AS test
 	RUN go test -v ./...
 
 
+FROM alpine AS concourse-release
+
+	ADD https://github.com/concourse/concourse/releases/download/v5.3.0/concourse-5.3.0-linux-amd64.tgz /tmp
+	RUN tar xvzf /tmp/concourse-5.3.0-linux-amd64.tgz -C /usr/local
+	RUN tar xvzf /usr/local/concourse/fly-assets/fly-linux-amd64.tgz -C /usr/local/bin/
+
+
 FROM ubuntu AS release
 
 	RUN apt update && apt install -y ca-certificates
+
+	COPY \
+		--from=concourse-release \
+		/usr/local/bin/fly \
+		/usr/local/bin/fly
 
 	COPY \
 		--from=build \
