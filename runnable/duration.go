@@ -20,7 +20,7 @@ var (
 		Name:    "slirunner_probe_duration_seconds",
 		Help:    "Time spent running a specific probe",
 		Buckets: []float64{1, 5, 10, 20, 30, 40, 50, 60, 90, 120},
-	}, []string{"probe"})
+	}, []string{"probe", "result"})
 )
 
 func NewWithMetrics(probeName string, runnable Runnable) *WithMetrics {
@@ -34,7 +34,12 @@ func (r *WithMetrics) Run(ctx context.Context) (err error) {
 	start := time.Now()
 
 	defer func() {
-		runs.WithLabelValues(r.name).Observe(time.Since(start).Seconds())
+		result := "success"
+		if err != nil {
+			result = "failure"
+		}
+
+		runs.WithLabelValues(r.name, result).Observe(time.Since(start).Seconds())
 	}()
 
 	err = r.runnable.Run(ctx)
