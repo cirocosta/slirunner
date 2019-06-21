@@ -2,20 +2,19 @@ package runnable
 
 import (
 	"context"
-	"sync"
 
 	"github.com/pkg/errors"
 	"golang.org/x/sync/errgroup"
 )
 
-// Concurrently concurrently runs a set of runnables, cancelling them all at
-// once in case of context cancellation.
+// Concurrently runs a set of runnables without
+// ever caring about the errors that those runnables might return.
+//
+// It just runs runnables and forget about what happened.
 //
 type Concurrently struct {
 	runnables []Runnable
 }
-
-var _ Runnable = &Concurrently{}
 
 func NewConcurrently(runnables []Runnable) *Concurrently {
 	return &Concurrently{
@@ -24,9 +23,37 @@ func NewConcurrently(runnables []Runnable) *Concurrently {
 }
 
 func (r *Concurrently) Run(ctx context.Context) (err error) {
-	g, ctx := errgroup.WithContext(ctx)
+	err = runConcurrently(ctx, r.runnables, new(errgroup.Group))
+	return
+}
 
-	for _, runnable := range r.runnables {
+// ConcurrentlyFailFast concurrently runs a set of runnables, cancelling them all at
+// once in case of context cancellation.
+//
+type ConcurrentlyFailFast struct {
+	runnables []Runnable
+}
+
+var _ Runnable = &ConcurrentlyFailFast{}
+
+func NewConcurrentlyFailFast(runnables []Runnable) *ConcurrentlyFailFast {
+	return &ConcurrentlyFailFast{
+		runnables: runnables,
+	}
+}
+
+func (r *ConcurrentlyFailFast) Run(ctx context.Context) (err error) {
+	var g *errgroup.Group
+
+	g, ctx = errgroup.WithContext(ctx)
+	err = runConcurrently(ctx, r.runnables, g)
+	return
+}
+
+// runConcurrently runs a bunch of runnables concurrently.
+//
+func runConcurrently(ctx context.Context, runnables []Runnable, g *errgroup.Group) (err error) {
+	for _, runnable := range runnables {
 		runnable := runnable // closure
 
 		g.Go(func() error {
@@ -41,35 +68,5 @@ func (r *Concurrently) Run(ctx context.Context) (err error) {
 		return
 	}
 
-	return
-}
-
-// ConcurrentlyWithoutErrorPropagation runs a set of runnables without
-// ever caring about the errors that those runnables might return.
-//
-// It just runs runnables and forget about what happened.
-//
-type ConcurrentlyWithoutErrorPropagation struct {
-	runnables []Runnable
-}
-
-func NewConcurrentlyWithoutErrorPropagation(runnables []Runnable) *ConcurrentlyWithoutErrorPropagation {
-	return &ConcurrentlyWithoutErrorPropagation{
-		runnables: runnables,
-	}
-}
-
-func (r *ConcurrentlyWithoutErrorPropagation) Run(ctx context.Context) (err error) {
-	var wg sync.WaitGroup
-
-	for _, runnable := range r.runnables {
-		wg.Add(1)
-		go func(r Runnable) {
-			runnable.Run(ctx)
-			wg.Done()
-		}(runnable)
-	}
-
-	wg.Wait()
 	return
 }

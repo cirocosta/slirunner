@@ -11,7 +11,9 @@ import (
 // sleepingRunnable is a dummy runnable that sleeps forever until
 // cancelled by its context.
 //
-type sleepingRunnable struct{}
+type sleepingRunnable struct {
+	finished bool
+}
 
 func (r *sleepingRunnable) Run(ctx context.Context) (err error) {
 	ch := make(chan struct{})
@@ -21,6 +23,7 @@ func (r *sleepingRunnable) Run(ctx context.Context) (err error) {
 	}()
 
 	<-ch
+	r.finished = true
 	return
 }
 
