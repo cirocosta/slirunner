@@ -141,7 +141,7 @@ func NewAll(target, username, password, concourseUrl, prefix string) runnable.Ru
 
 		NewLogin(target, username, password, concourseUrl),
 
-		runnable.NewConcurrently([]runnable.Runnable{
+		runnable.NewConcurrentlyWithoutErrorPropagation([]runnable.Runnable{
 			NewCreateAndRunNewPipeline(target, prefix),
 			NewHijackFailingBuild(target, prefix),
 			NewRunExistingPipeline(target, prefix),

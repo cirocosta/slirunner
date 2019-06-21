@@ -2,6 +2,7 @@ package runnable
 
 import (
 	"context"
+	"sync"
 
 	"github.com/pkg/errors"
 	"golang.org/x/sync/errgroup"
@@ -40,5 +41,35 @@ func (r *Concurrently) Run(ctx context.Context) (err error) {
 		return
 	}
 
+	return
+}
+
+// ConcurrentlyWithoutErrorPropagation runs a set of runnables without
+// ever caring about the errors that those runnables might return.
+//
+// It just runs runnables and forget about what happened.
+//
+type ConcurrentlyWithoutErrorPropagation struct {
+	runnables []Runnable
+}
+
+func NewConcurrentlyWithoutErrorPropagation(runnables []Runnable) *ConcurrentlyWithoutErrorPropagation {
+	return &ConcurrentlyWithoutErrorPropagation{
+		runnables: runnables,
+	}
+}
+
+func (r *ConcurrentlyWithoutErrorPropagation) Run(ctx context.Context) (err error) {
+	var wg sync.WaitGroup
+
+	for _, runnable := range r.runnables {
+		wg.Add(1)
+		go func(r Runnable) {
+			runnable.Run(ctx)
+			wg.Done()
+		}(runnable)
+	}
+
+	wg.Wait()
 	return
 }

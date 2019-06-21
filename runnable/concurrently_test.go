@@ -17,56 +17,83 @@ var _ = Describe("Concurrently", func() {
 		err       error
 	)
 
-	JustBeforeEach(func() {
-		err = runnable.NewConcurrently(runnables).Run(context.TODO())
-	})
+	Describe("with propagation", func() {
 
-	Context("having several runnables that finish", func() {
-
-		BeforeEach(func() {
-			runnables = []runnable.Runnable{
-				&dummyRunnable{},
-				&dummyRunnable{},
-				&dummyRunnable{},
-			}
+		JustBeforeEach(func() {
+			err = runnable.NewConcurrently(runnables).Run(context.TODO())
 		})
 
-		// ¯\_(ツ)_/¯
-		It("eventually runs them all", func() {
-			Expect(err).NotTo(HaveOccurred())
-
-			for _, runnable := range runnables {
-				dr := runnable.(*dummyRunnable)
-				Expect(dr.ran).To(BeTrue())
-			}
-		})
-
-	})
-
-	Context("having some runnables that sleep forever", func() {
-
-		BeforeEach(func() {
-			runnables = []runnable.Runnable{
-				&sleepingRunnable{},
-				&sleepingRunnable{},
-			}
-		})
-
-		Context("but one that fails", func() {
+		Context("having several runnables that finish", func() {
 
 			BeforeEach(func() {
-				runnables = append(runnables, &dummyRunnable{
-					err: errors.New("lol"),
+				runnables = []runnable.Runnable{
+					&dummyRunnable{},
+					&dummyRunnable{},
+					&dummyRunnable{},
+				}
+			})
+
+			// ¯\_(ツ)_/¯
+			It("eventually runs them all", func() {
+				Expect(err).NotTo(HaveOccurred())
+
+				for _, runnable := range runnables {
+					dr := runnable.(*dummyRunnable)
+					Expect(dr.ran).To(BeTrue())
+				}
+			})
+
+		})
+
+		Context("having some runnables that sleep forever", func() {
+
+			BeforeEach(func() {
+				runnables = []runnable.Runnable{
+					&sleepingRunnable{},
+					&sleepingRunnable{},
+				}
+			})
+
+			Context("but one that fails", func() {
+
+				BeforeEach(func() {
+					runnables = append(runnables, &dummyRunnable{
+						err: errors.New("lol"),
+					})
 				})
+
+				It("propagates the failure", func() {
+					Expect(err).To(HaveOccurred())
+				})
+
+				It("cancels them all", func() {
+					// otherwise, we'd not even run this assertion
+					Expect(true).To(BeTrue())
+				})
+
+			})
+		})
+
+	})
+
+	Describe("WithoutErrorPropagation", func() {
+
+		JustBeforeEach(func() {
+			err = runnable.NewConcurrentlyWithoutErrorPropagation(runnables).Run(context.TODO())
+		})
+
+		Context("having at least one runnable that fail", func() {
+
+			BeforeEach(func() {
+				runnables = []runnable.Runnable{
+					&dummyRunnable{},
+					&dummyRunnable{err: errors.New("lol")},
+					&dummyRunnable{},
+				}
 			})
 
-			It("propagates the failure", func() {
-				Expect(err).To(HaveOccurred())
-			})
-
-			It("cancels them all", func() {
-				// otherwise, we'd not even run this assertion
-				Expect(true).To(BeTrue())
+			It("doesnt propagate the failure", func() {
+				Expect(err).NotTo(HaveOccurred())
 			})
 
 		})
