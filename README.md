@@ -3,6 +3,8 @@
 > probes your [Concourse][concourse] installation, generating 
 > [Service Level Indicators][slis] (SLIs)
 
+![sample dashboard](https://user-images.githubusercontent.com/3574444/59943990-a8559480-9431-11e9-8a0e-0ffefa157cce.png)
+
 
 [concourse]: https://concourse-ci.org 
 [slis]: https://landing.google.com/sre/sre-book/chapters/service-level-objectives/
