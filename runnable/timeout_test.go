@@ -10,22 +10,6 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-// sleepingRunnable is a dummy runnable that sleeps forever until
-// cancelled by its context.
-//
-type sleepingRunnable struct{}
-
-func (r *sleepingRunnable) Run(ctx context.Context) (err error) {
-	ch := make(chan struct{})
-
-	go func() {
-		ch <- (<-ctx.Done())
-	}()
-
-	<-ch
-	return
-}
-
 var _ = Describe("WithTimeout", func() {
 
 	JustBeforeEach(func() {

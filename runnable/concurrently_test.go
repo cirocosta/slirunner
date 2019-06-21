@@ -2,6 +2,7 @@ package runnable_test
 
 import (
 	"context"
+	"errors"
 
 	"github.com/cirocosta/slirunner/runnable"
 
@@ -9,28 +10,18 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-// dummyRunnable implements the Runnable interface, capturing how
-// many times it ran.
-//
-type dummyRunnable struct {
-	ran bool
-}
-
-func (r *dummyRunnable) Run(ctx context.Context) (err error) {
-	r.ran = true
-	return
-}
-
 var _ = Describe("Concurrently", func() {
 
-	var runnables []runnable.Runnable
+	var (
+		runnables []runnable.Runnable
+		err       error
+	)
 
 	JustBeforeEach(func() {
-		err := runnable.NewConcurrently(runnables).Run(context.TODO())
-		Expect(err).ToNot(HaveOccurred())
+		err = runnable.NewConcurrently(runnables).Run(context.TODO())
 	})
 
-	Context("having several runnables", func() {
+	Context("having several runnables that finish", func() {
 
 		BeforeEach(func() {
 			runnables = []runnable.Runnable{
@@ -42,11 +33,44 @@ var _ = Describe("Concurrently", func() {
 
 		// ¯\_(ツ)_/¯
 		It("eventually runs them all", func() {
+			Expect(err).NotTo(HaveOccurred())
+
 			for _, runnable := range runnables {
 				dr := runnable.(*dummyRunnable)
 				Expect(dr.ran).To(BeTrue())
 			}
 		})
+
+	})
+
+	Context("having some runnables that sleep forever", func() {
+
+		BeforeEach(func() {
+			runnables = []runnable.Runnable{
+				&sleepingRunnable{},
+				&sleepingRunnable{},
+			}
+		})
+
+		Context("but one that fails", func() {
+
+			BeforeEach(func() {
+				runnables = append(runnables, &dummyRunnable{
+					err: errors.New("lol"),
+				})
+			})
+
+			It("propagates the failure", func() {
+				Expect(err).To(HaveOccurred())
+			})
+
+			It("cancels them all", func() {
+				// otherwise, we'd not even run this assertion
+				Expect(true).To(BeTrue())
+			})
+
+		})
+
 	})
 
 })

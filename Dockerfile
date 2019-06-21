@@ -26,8 +26,10 @@ FROM base AS test
 
 FROM alpine AS concourse-release
 
-	ADD https://github.com/concourse/concourse/releases/download/v5.3.0/concourse-5.3.0-linux-amd64.tgz /tmp
-	RUN tar xvzf /tmp/concourse-5.3.0-linux-amd64.tgz -C /usr/local
+	ARG CONCOURSE_VERSION=5.3.0
+
+	ADD https://github.com/concourse/concourse/releases/download/v${CONCOURSE_VERSION}/concourse-${CONCOURSE_VERSION}-linux-amd64.tgz /tmp
+	RUN tar xvzf /tmp/concourse-${CONCOURSE_VERSION}-linux-amd64.tgz -C /usr/local
 	RUN tar xvzf /usr/local/concourse/fly-assets/fly-linux-amd64.tgz -C /usr/local/bin/
 
 
