@@ -8,6 +8,10 @@ import (
 )
 
 type Config struct {
+	Username     string
+	Password     string
+	ConcourseUrl string
+
 	Target           string
 	ExistingPipeline string
 	Pipeline         string

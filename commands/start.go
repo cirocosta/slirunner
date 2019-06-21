@@ -6,6 +6,8 @@ import (
 	"os"
 	"time"
 
+	"code.cloudfoundry.org/lager"
+	"code.cloudfoundry.org/lager/lagerctx"
 	"github.com/cirocosta/slirunner/exporter"
 	"github.com/cirocosta/slirunner/probes"
 )
@@ -15,13 +17,22 @@ type startCommand struct {
 	PipelinesPrefix string        `long:"prefix"   default:"slirunner-" description:"prefix used in pipelines created by probes"`
 	Interval        time.Duration `long:"interval" default:"1m"         description:"interval between executions"`
 
+	Username     string `long:"username"      short:"u" required:"true"`
+	Password     string `long:"password"      short:"p" required:"true"`
+	ConcourseUrl string `long:"concourse-url" short:"c" required:"true"`
+
 	Prometheus exporter.Exporter `group:"Prometheus configuration"`
 }
 
 func (c *startCommand) Execute(args []string) (err error) {
 	var (
-		allProbes = probes.New(c.Target, c.PipelinesPrefix)
-		ticker    = time.NewTicker(c.Interval)
+		allProbes = probes.NewAll(
+			c.Target,
+			c.Username, c.Password,
+			c.ConcourseUrl,
+			c.PipelinesPrefix,
+		)
+		ticker = time.NewTicker(c.Interval)
 	)
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -29,6 +40,11 @@ func (c *startCommand) Execute(args []string) (err error) {
 		cancel()
 		c.Prometheus.Close()
 	})
+
+	logger := lager.NewLogger("slirunner").Session("run")
+	logger.RegisterSink(lager.NewWriterSink(os.Stdout, lager.INFO))
+
+	ctx = lagerctx.NewContext(ctx, logger)
 
 	go func() {
 		err := c.Prometheus.Listen()

@@ -3,32 +3,33 @@ package runnable
 import (
 	"context"
 
-	"code.cloudfoundry.org/lager"
+	"code.cloudfoundry.org/lager/lagerctx"
 )
 
 type WithLogging struct {
 	runnable Runnable
-	logger   lager.Logger
+	name     string
 }
 
 var _ Runnable = &WithLogging{}
 
-func NewWithLogging(logger lager.Logger, runnable Runnable) *WithLogging {
+func NewWithLogging(name string, runnable Runnable) *WithLogging {
 	return &WithLogging{
 		runnable: runnable,
-		logger:   logger,
+		name:     name,
 	}
 }
 
 func (r *WithLogging) Run(ctx context.Context) (err error) {
-	r.logger.Info("start")
+	logger := lagerctx.FromContext(ctx).Session(r.name)
+	logger.Info("start")
 
 	err = r.runnable.Run(ctx)
 	if err != nil {
-		r.logger.Error("finish", err)
+		logger.Error("finish", err)
 		return
 	}
 
-	r.logger.Info("finish")
+	logger.Info("finish")
 	return
 }
