@@ -1,11 +1,11 @@
 # sli runner
 
-> probes your [Concourse][concourse] installation, generating [Service Level
-> Indicators][slis] (SLIs)
+> probes your [Concourse][concourse] installation, generating 
+> [Service Level Indicators][slis] (SLIs)
 
 
-[concourse]: https://concourse-ci.org [slis]:
-https://landing.google.com/sre/sre-book/chapters/service-level-objectives/
+[concourse]: https://concourse-ci.org 
+[slis]: https://landing.google.com/sre/sre-book/chapters/service-level-objectives/
 
 
 ## why
