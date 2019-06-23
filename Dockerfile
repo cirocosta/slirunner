@@ -44,7 +44,7 @@ FROM ubuntu AS release
 
 	COPY \
 		--from=build \
-		/usr/bin/slirunner \
-		/usr/bin/slirunner
+		/usr/local/bin/slirunner \
+		/usr/local/bin/slirunner
 
 	ENTRYPOINT [ "/usr/bin/slirunner" ]

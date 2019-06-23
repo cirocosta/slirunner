@@ -28,6 +28,14 @@ resources:
       file: ./VERSION
       git_user: Ciro S. Costa <cscosta@pivotal.io>
 
+  - name: gh-release
+    type: github-release
+    source:
+      owner: cirocosta
+      repository: slirunner
+      access_token: ((github-token))
+
+
 
 jobs:
   - name: build
@@ -54,3 +62,35 @@ jobs:
         params:
           image: image/image.tar
           additional_tags: version/version
+
+
+  - name: publish
+    public: true
+    plan:
+      - in_parallel:
+        - get: container-image
+          passed: [build]
+        - get: version
+          passed: [build]
+      - task: prepare-gh-release
+        image: container-image
+        config:
+          platform: linux
+          inputs:
+            - name: version
+          outputs:
+            - name: out
+          run:
+            path: /bin/sh
+            args:
+              - -cex
+              - |
+                false
+      - put: gh-release
+        inputs: [version, release]
+        params:
+          name: ./version/version
+          tag: ./version/version
+          body: ./version/version
+          globs:
+            - ./release/*.tgz
