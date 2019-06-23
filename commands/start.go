@@ -17,9 +17,9 @@ type startCommand struct {
 	PipelinesPrefix string        `long:"prefix"   default:"slirunner-" description:"prefix used in pipelines created by probes"`
 	Interval        time.Duration `long:"interval" default:"1m"         description:"interval between executions"`
 
-	Username     string `long:"username"      short:"u" required:"true"`
-	Password     string `long:"password"      short:"p" required:"true"`
-	ConcourseUrl string `long:"concourse-url" short:"c" required:"true"`
+	Username     string `long:"username"      short:"u" required:"true" description:"username of a local user"`
+	Password     string `long:"password"      short:"p" required:"true" description:"password of the local user"`
+	ConcourseUrl string `long:"concourse-url" short:"c" required:"true" description:"URL of the concourse to monitor"`
 
 	Prometheus exporter.Exporter `group:"Prometheus configuration"`
 }
