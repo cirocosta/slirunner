@@ -16,6 +16,7 @@ resources:
     type: registry-image
     source:
       repository: cirocosta/slirunner
+      tag: rc
       username: ((docker-user))
       password: ((docker-password))
 
@@ -61,7 +62,6 @@ jobs:
         get_params: {format: oci}
         params:
           image: image/image.tar
-          additional_tags: version/version
 
 
   - name: publish
@@ -74,7 +74,7 @@ jobs:
           passed: [build]
         - get: repository
           passed: [build]
-      - task: prepare-gh-release
+      - task: prepare-release
         image: container-image
         config:
           platform: linux
@@ -88,15 +88,23 @@ jobs:
               - -cex
               - |
                 tar cvzf out/slirunner.tgz -C /usr/local/bin fly slirunner
-      - put: gh-release
-        inputs: [version, out, repository]
-        params:
-          body: ./version/version
-          commitish: repository/.git/ref
-          globs: [./out/*.tgz]
-          name: ./version/version
-          tag: ./version/version
-          tag_prefix: v
-      - put: version
-        params:
-          bump: minor
+                echo "$(cat version/version) latest" > out/additional_tags
+      - in_parallel:
+        - put: gh-release
+          inputs: [version, out, repository]
+          params:
+            body: ./version/version
+            commitish: repository/.git/ref
+            globs: [./out/*.tgz]
+            name: ./version/version
+            tag: ./version/version
+            tag_prefix: v
+        - put: container-image
+          inputs: [container-image, out]
+          get_params: {format: oci}
+          params:
+            image: image/image.tar
+            additional_tags: out/additional_tags
+        - put: version
+          params:
+            bump: minor
