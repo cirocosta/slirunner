@@ -107,4 +107,4 @@ jobs:
             additional_tags: out/additional_tags
         - put: version
           params:
-            bump: minor
+            bump: patch
