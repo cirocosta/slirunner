@@ -44,7 +44,7 @@ jobs:
     plan:
       - in_parallel:
         - {get: repository, trigger: true}
-        - {get: version, trigger: true}
+        - {get: version}
       - in_parallel:
           fail_fast: true
           steps:
