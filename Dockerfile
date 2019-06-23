@@ -16,7 +16,7 @@ FROM base AS build
 
 	RUN go build \
 		-tags netgo -v -a \
-		-o /usr/bin/slirunner \
+		-o /usr/local/bin/slirunner \
 		-ldflags "-X main.version=$(cat ./VERSION) -extldflags \"-static\""
 
 FROM base AS test
