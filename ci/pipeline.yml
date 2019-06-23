@@ -72,6 +72,8 @@ jobs:
           passed: [build]
         - get: version
           passed: [build]
+        - get: repository
+          passed: [build]
       - task: prepare-gh-release
         image: container-image
         config:
@@ -85,12 +87,13 @@ jobs:
             args:
               - -cex
               - |
-                false
+                tar cvzf out/slirunner.tgz -C /usr/local/bin fly slirunner
       - put: gh-release
-        inputs: [version, release]
+        inputs: [version, out, repository]
         params:
+          body: ./version/version
+          commitish: repository/.git/ref
+          globs: [./out/*.tgz]
           name: ./version/version
           tag: ./version/version
-          body: ./version/version
-          globs:
-            - ./release/*.tgz
+          tag_prefix: v
