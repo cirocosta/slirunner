@@ -79,19 +79,20 @@ Available commands:
 
 The binary can either be built using `go`:
 
-```sh
-go get -u github.com/cirocosta/slirunner
+```console
+$ go get -u github.com/cirocosta/slirunner
 ```
 
 or fetched from the releases page:
 
-```sh
-TODO
+```console
+$ curl -SL https://github.com/cirocosta/slirunner/releases/download/v0.1.0/slirunner.tgz | tar xvzf -
+fly slirunner
 ```
 
 With that done, it's all about having it running:
 
-```
+```bash
 slirunner start \
   --target $TARGET_TO_GENERATE \
   --username $CONCOURSE_BASIC_AUTH_USERNAME \
