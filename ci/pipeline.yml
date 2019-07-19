@@ -77,6 +77,10 @@ jobs:
       - in_parallel:
         - get: rc-image
           passed: [build]
+        - get: rc-image-oci
+          resource: rc-image
+          params: {format: oci}
+          passed: [build]
         - get: version
           passed: [build]
         - get: repository
@@ -107,10 +111,10 @@ jobs:
             tag: ./version/version
             tag_prefix: v
         - put: final-image
-          inputs: [rc-image, out]
+          inputs: [rc-image-oci, out]
           get_params: {format: oci}
           params:
-            image: rc-image/image.tar
+            image: rc-image-oci/image.tar
             additional_tags: out/additional_tags
         - put: version
           params:
