@@ -12,11 +12,18 @@ resources:
       uri: https://((github-token))@github.com/cirocosta/slirunner
       ignore_paths: [ ./VERSION ]
 
-  - name: container-image
+  - name: rc-image
     type: registry-image
     source:
       repository: cirocosta/slirunner
       tag: rc
+      username: ((docker-user))
+      password: ((docker-password))
+
+  - name: final-image
+    type: registry-image
+    source:
+      repository: cirocosta/slirunner
       username: ((docker-user))
       password: ((docker-password))
 
@@ -57,7 +64,7 @@ jobs:
               output_mapping: { image: discard }
               params: {TARGET: "test"}
               file: repository/ci/tasks/build.yml
-      - put: container-image
+      - put: rc-image
         inputs: [image, version]
         get_params: {format: oci}
         params:
@@ -68,14 +75,14 @@ jobs:
     public: true
     plan:
       - in_parallel:
-        - get: container-image
+        - get: rc-image
           passed: [build]
         - get: version
           passed: [build]
         - get: repository
           passed: [build]
       - task: prepare-release
-        image: container-image
+        image: rc-image
         config:
           platform: linux
           inputs:
@@ -88,7 +95,7 @@ jobs:
               - -cex
               - |
                 tar cvzf out/slirunner.tgz -C /usr/local/bin fly slirunner
-                echo "$(cat version/version) latest" > out/additional_tags
+                echo "$(cat version/version)" > out/additional_tags
       - in_parallel:
         - put: gh-release
           inputs: [version, out, repository]
@@ -99,11 +106,11 @@ jobs:
             name: ./version/version
             tag: ./version/version
             tag_prefix: v
-        - put: container-image
-          inputs: [container-image, out]
+        - put: final-image
+          inputs: [rc-image, out]
           get_params: {format: oci}
           params:
-            image: container-image/image.tar
+            image: rc-image/image.tar
             additional_tags: out/additional_tags
         - put: version
           params:

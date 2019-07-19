@@ -32,6 +32,26 @@ func NewLogin(target, username, password, concourseUrl string) runnable.Runnable
 	)
 }
 
+func NewSync(target string) runnable.Runnable {
+	var (
+		config  = Config{Target: target}
+		timeout = 4 * time.Minute
+	)
+
+	return runnable.NewWithLogging("sync",
+		runnable.NewWithMetrics("sync",
+			runnable.NewWithTimeout(
+				runnable.NewShellCommand(FormatProbe(`
+
+	fly -t {{ .Target }} sync
+
+				`, config), os.Stderr),
+				timeout,
+			),
+		),
+	)
+}
+
 func NewCreateAndRunNewPipeline(target, prefix string) runnable.Runnable {
 	var (
 		config = Config{
@@ -140,6 +160,7 @@ func NewAll(target, username, password, concourseUrl, prefix string) runnable.Ru
 	return runnable.NewSequentially([]runnable.Runnable{
 
 		NewLogin(target, username, password, concourseUrl),
+		NewSync(target),
 
 		runnable.NewConcurrently([]runnable.Runnable{
 			NewCreateAndRunNewPipeline(target, prefix),
