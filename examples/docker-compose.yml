@@ -1,0 +1,55 @@
+# docker-compose.yml - a sample docker-compose configuration that brings a
+# grafana dashboard up having the SLIs visualized.
+#
+# ps.: assumes that `concourse` has been brought up using the
+# `docker-compose.yml` file from `concourse/concourse`
+#
+#     git clone https://github.com/concourse/concourse concourse
+#     cd $_
+#
+#     docker-compose up -d --build
+#
+
+version: '3'
+
+services:
+  grafana:
+    build: './grafana'
+    container_name: 'grafana'
+    ports:
+      - '3000:3000'
+  slirunner:
+    image: cirocosta/slirunner
+    container_name: 'slirunner'
+    command:
+      - start
+      - --target=test
+      - --concourse-url=http://web:8080
+      - --password=test
+      - --username=test
+  prometheus:
+    image: prom/prometheus
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        echo "
+        global:
+          scrape_interval: '5s'
+          evaluation_interval: '5s'
+        scrape_configs:
+          - job_name: 'slirunner'
+            static_configs:
+              - targets:
+                - 'slirunner:9001'
+        " > config.yml
+          exec prometheus \
+            --config.file=config.yml \
+            --storage.tsdb.path=/prometheus
+    ports:
+      - '9090:9090'
+
+networks:
+  default:
+    external:
+      name: concourse_default
