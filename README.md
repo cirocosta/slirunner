@@ -106,7 +106,22 @@ slirunner start \
 A container image `cirocosta/slirunner` is continuously pushed to
 https://hub.docker.com/r/cirocosta/slirunner.
 
-Check the Kubernetes example under
+e.g., using `docker-compose`:
+
+```yaml
+version: '3'
+services:
+  slirunner:
+    image: cirocosta/slirunner
+    command:
+      - start
+      - --target=test
+      - --concourse-url=http://web:8080
+      - --password=test
+      - --username=test
+```
+
+For kubernetes, check out the example under
 [`./examples/kubernetes.yaml`](./examples/kubernetes.yaml).
 
 
