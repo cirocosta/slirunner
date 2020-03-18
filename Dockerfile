@@ -47,4 +47,4 @@ FROM ubuntu AS release
 		/usr/local/bin/slirunner \
 		/usr/local/bin/slirunner
 
-	ENTRYPOINT [ "/usr/bin/slirunner" ]
+	ENTRYPOINT [ "/usr/local/bin/slirunner" ]
