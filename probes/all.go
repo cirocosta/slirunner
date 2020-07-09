@@ -15,6 +15,8 @@ func NewLogin(target, username, password, concourseUrl string) runnable.Runnable
 			Password:     password,
 			ConcourseUrl: concourseUrl,
 		}
+		username = os.Getenv("SR_USERNAME")
+		password = os.Getenv("SR_PASSWORD")
 		timeout = 60 * time.Second
 	)
 
