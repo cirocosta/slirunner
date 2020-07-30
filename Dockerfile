@@ -26,7 +26,7 @@ FROM base AS test
 
 FROM alpine AS concourse-release
 
-	ARG CONCOURSE_VERSION=6.2.0
+	ARG CONCOURSE_VERSION=6.4.0
 
 	ADD https://github.com/concourse/concourse/releases/download/v${CONCOURSE_VERSION}/concourse-${CONCOURSE_VERSION}-linux-amd64.tgz /tmp
 	RUN tar xvzf /tmp/concourse-${CONCOURSE_VERSION}-linux-amd64.tgz -C /usr/local
