@@ -23,7 +23,7 @@ func NewLogin(target, username, password, concourseUrl string) runnable.Runnable
 			runnable.NewWithTimeout(
 				runnable.NewShellCommand(FormatProbe(`
 
-	fly -t {{ .Target }} login -u {{ .Username }} -p {{ .Password }} -c {{ .ConcourseUrl }}
+	fly -t {{ .Target }} login -u {{ .Username }} -p '{{ .Password }}' -c {{ .ConcourseUrl }}
 
 				`, config), os.Stderr),
 				timeout,

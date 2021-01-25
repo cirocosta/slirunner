@@ -33,7 +33,7 @@ jobs:
         type: registry-image
         source: {repository: busybox}
       run:
-        path: false
+        path: "false"
 
 - name: auto-triggering
   build_logs_to_retain: 20
